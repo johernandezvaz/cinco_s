@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parsePeriod, periodStart } from "./period";
+import { formatLocalDate, formatLocalDateTime, localWallClock, parsePeriod, periodStart } from "./period";
 
 const MX = "America/Mexico_City"; // UTC−6 sin horario de verano.
 
@@ -11,8 +11,8 @@ describe("periodos en zona horaria local", () => {
   });
   it("7 y 30 días incluyen hoy completo", () => {
     const now = new Date("2026-10-29T18:00:00Z");
-    expect(periodStart("7", now, MX)!.toISOString()).toBe("2026-10-23T06:00:00.000Z");
-    expect(periodStart("30", now, MX)!.toISOString()).toBe("2026-09-30T06:00:00.000Z");
+    expect(periodStart("7d", now, MX)!.toISOString()).toBe("2026-10-23T06:00:00.000Z");
+    expect(periodStart("30d", now, MX)!.toISOString()).toBe("2026-09-30T06:00:00.000Z");
   });
   it("Todo no tiene límite", () => expect(periodStart("all", new Date(), MX)).toBeNull());
   it("respeta cambios de horario en otras zonas", () => {
@@ -21,8 +21,15 @@ describe("periodos en zona horaria local", () => {
     expect(periodStart("today", new Date("2026-11-02T15:00:00Z"), "America/New_York")!.toISOString()).toBe("2026-11-02T05:00:00.000Z");
   });
   it("un periodo desconocido usa 7 días", () => {
-    expect(parsePeriod("x")).toBe("7");
-    expect(parsePeriod(undefined)).toBe("7");
-    expect(parsePeriod("30")).toBe("30");
+    expect(parsePeriod("x")).toBe("7d");
+    expect(parsePeriod(undefined)).toBe("7d");
+    expect(parsePeriod("30d")).toBe("30d");
+    expect(parsePeriod("30")).toBe("30d");
+  });
+  it("formatea fecha y hora locales", () => {
+    const at = new Date("2026-10-29T01:30:00Z");
+    expect(formatLocalDateTime(at, MX)).toBe("2026-10-28 19:30");
+    expect(formatLocalDate(at, MX)).toBe("2026-10-28");
+    expect(localWallClock(at, MX).toISOString()).toBe("2026-10-28T19:30:00.000Z");
   });
 });

@@ -2,7 +2,7 @@
 
 Aplicación para capturar y revisar auditorías 5S en una planta de manufactura.
 
-**Stack:** Next.js 16 (App Router, TypeScript estricto) · PostgreSQL 16+ · Drizzle ORM con el driver `postgres` (postgres.js) · Zod · Vitest.
+**Stack:** Next.js 16 (App Router, TypeScript estricto) · PostgreSQL 16+ · Drizzle ORM con el driver `postgres` (postgres.js) · Zod · Vitest · exceljs (Excel) · @react-pdf/renderer (PDF).
 
 ## Inicio rápido
 
@@ -65,14 +65,33 @@ Abre `http://localhost:4571`. La base arranca vacía; el tablero muestra sus est
 - El semáforo por estación, los KPI de estaciones (evaluadas, cumplen, a mejorar, críticas) y el promedio por S usan la última evaluación de cada estación dentro del periodo.
 - El promedio general y los puntos que más fallan usan todas las evaluaciones del periodo.
 - Al tocar una estación se abre el detalle de esa evaluación con su respuesta a cada pregunta.
-- "Exportar CSV" descarga las evaluaciones del periodo con fecha, estación, operador, turno, porcentaje, semáforo, comentarios y las 15 respuestas (Sí/Parcial/No).
+- Los filtros usan las claves `today`, `7d`, `30d` y `all` (los enlaces anteriores con `7` y `30` siguen funcionando).
+- El botón **Exportar** descarga el periodo seleccionado en CSV, Excel o PDF (ver abajo).
+
+## Exportar
+
+`GET /api/export?format=csv|xlsx|pdf&period=today|7d|30d|all` (por defecto `period=7d`). Parámetros validados con Zod: valores inválidos devuelven **400**. Responde con `Content-Disposition: attachment`, `Cache-Control: no-store` y el nombre `auditoria-5s_{periodo}_{YYYY-MM-DD}.{ext}` (fecha de generación en `APP_TIME_ZONE`). Funciona sin red: no usa CDN ni fuentes remotas.
+
+Las tres salidas y el tablero leen la misma función, `getDashboardData(period, timeZone)` en `src/lib/dashboard-data.ts`; porcentajes y semáforo vienen de `src/lib/scoring.ts`.
+
+| Formato | Contenido |
+|---|---|
+| **CSV** | Todos los registros del periodo. UTF-8 con BOM, coma, CRLF. Columnas: Fecha (`YYYY-MM-DD HH:mm` local), Estación, Operador, Turno, Porcentaje, Semáforo, Comentarios y las 15 respuestas (encabezado `1S-1 Solo lo necesario`, valores Sí/Parcial/No). Celdas que empiezan con `=`, `+`, `-`, `@`, tab o retorno se prefijan con `'`. |
+| **Excel** | Hojas: Resumen (periodo, fecha de generación, 5 KPI, leyenda del semáforo), Semáforo por estación, Puntos que más fallan, Promedio por S y Registros (todos, con las 15 respuestas). Encabezados navy, primera fila congelada, autofiltro en Semáforo y Registros, porcentajes y fechas como valores reales de Excel. |
+| **PDF** | Reporte A4 con los bloques del tablero: KPI, leyenda, semáforo por estación, promedio por S, puntos que más fallan y registros recientes (máximo 200; el resto está en Excel/CSV). Encabezado de tabla repetido en cada página y "Página X de Y". |
+
+Ningún formato incluye columnas de puntos; la única mención está en la nota de metodología del PDF.
 
 ## Estructura
 
 - `src/config/checklist.ts`: preguntas por S, editables sin tocar componentes.
 - `src/config/scoring.ts`: puntos, umbrales, turnos y zona horaria.
 - `src/db/schema.ts` y `drizzle/`: esquema y migraciones de PostgreSQL.
-- `src/db/audits.ts`: guardado transaccional (evaluación + 15 respuestas, validado con Zod) y consultas del tablero, detalle y CSV.
+- `src/config/tokens.ts`: tokens de color (fuente única para CSS, Tailwind, Excel y PDF).
+- `src/db/audits.ts`: guardado transaccional (evaluación + 15 respuestas, validado con Zod) y detalle de una evaluación.
+- `src/lib/dashboard-data.ts`: datos del tablero y de las exportaciones.
+- `src/lib/export/`: `csv.ts`, `xlsx.ts`, `pdf/` (componentes del reporte), `theme.ts` (tema compartido) e `index.ts` (formato, nombre de archivo).
+- `src/assets/fonts/`: Inter y Barlow Condensed en TTF estático para el PDF (licencia SIL OFL 1.1 incluida).
 
 ## Diseño
 

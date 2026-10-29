@@ -6,7 +6,7 @@ description: Sistema visual sobrio para auditorías operativas de manufactura. A
 
 # Diseño de Auditoría 5S
 
-> Fuente de verdad del código: `src/app/globals.css` (`:root`). `tailwind.config.ts` solo referencia esas variables (`var(--blue)`, …); ningún componente usa hex directos.
+> Fuente de verdad del código: `src/config/tokens.ts`. De ahí salen el `:root` (inyectado en `src/app/layout.tsx`), los colores de `tailwind.config.ts` (`var(--blue)`, …) y el tema de exportación (`src/lib/export/theme.ts`). `globals.css` y los componentes no contienen hex; `src/config/tokens.test.ts` falla si se desincronizan.
 
 ## Color
 
@@ -115,7 +115,37 @@ Tarjeta blanca centrada: porcentaje grande en Barlow Condensed, badge de semáfo
 - Sí = 2 pts, Parcial = 1 pt, No = 0 pts (`ANSWER_POINTS` en `src/config/scoring.ts`). Máximo 30 por evaluación (15 × 2) y 6 por S (3 × 2).
 - Porcentaje = puntos / 30 × 100 redondeado; porcentaje por S = puntos de la S / 6 × 100. El cálculo vive solo en `src/lib/scoring.ts`.
 - **Los puntos solo aparecen en la leyenda del formulario:** "Sí = se cumple (2 pts) · Parcial = se cumple a medias (1 pt) · No = no se cumple (0 pts)".
-- Botones, encabezados de sección, confirmación, tablero, detalle, tablas y CSV muestran porcentaje y semáforo; nunca "pts" ni "X/30".
+- Botones, encabezados de sección, confirmación, tablero, detalle, tablas, CSV y Excel muestran porcentaje y semáforo; nunca "pts" ni "X/30".
+- En el PDF, los puntos aparecen solo en la nota de metodología: "Sí = 2 pts · Parcial = 1 pt · No = 0 pts. Porcentaje = puntos / 30 × 100."
+
+## Exportar
+
+### Control en el tablero
+
+Botón único **Exportar** en la fila de filtros de periodo (alineado a la derecha; a todo el ancho en móvil): fondo `blue`, texto blanco, radio 4px, alto mínimo 44px, ícono de descarga y flecha. Abre un menú blanco con borde `1px gray`, radio 4px y sin sombra, con tres opciones de 44px de alto, cada una con ícono `blue` y texto navy: "CSV (.csv)", "Excel (.xlsx)" y "Reporte PDF (.pdf)". Hover y foco en `tint`.
+
+- Accesibilidad: `aria-haspopup="menu"`, `aria-expanded`, `aria-controls`; opciones `role="menuitem"`. Flechas arriba/abajo (circulares), Inicio/Fin, Esc cierra y devuelve el foco al botón, Tab cierra.
+- Mientras se genera: el botón dice "Generando…" y queda deshabilitado. Un error aparece bajo el botón con el estilo de error (`error-bg`, texto `error-ink`, franja izquierda `error`, `role="alert"`).
+- Siempre exporta el periodo seleccionado.
+
+### Excel
+
+- Encabezados: relleno navy, texto blanco en negritas, bordes `gray`; primera fila congelada; autofiltro en "Semáforo por estación" y "Registros".
+- Anchos de columna según el contenido (10–48 caracteres); texto largo (preguntas, comentarios, encabezados de respuestas) con ajuste de línea.
+- Porcentajes como número con formato `0%`; fechas como fecha real con formato `yyyy-mm-dd hh:mm` en hora de planta.
+- Semáforo y respuestas: relleno `*-bg` con texto `*-ink` en negritas y la palabra del estado (Cumple/Mejorar/Crítico, Sí/Parcial/No).
+
+### PDF
+
+- A4 vertical, márgenes de 36pt, fondo blanco, sin degradados ni sombras, radios 4px.
+- Encabezado: "Auditoría 5S de Estaciones" en Barlow Condensed 700 navy, periodo y fecha/hora de generación con su zona horaria; línea inferior `1px gray`.
+- KPI: 5 tarjetas con borde superior de 4px (`blue` para promedio y estaciones; `success`/`warning`/`error` para Cumplen/A mejorar/Críticas) y número de 28pt en Barlow Condensed navy.
+- Leyenda del semáforo con badges.
+- Tablas: encabezados en Inter 8.5pt MAYÚSCULAS con tracking, color `muted`; filas de una línea separadas por `1px gray` que nunca se parten entre páginas; textos largos con elipsis. Badge de semáforo con fondo `*-bg`, borde del color fuerte, ícono vectorial (✓, medio círculo, ✕) y texto, legible impreso en blanco y negro.
+- Promedio por S: barras con pista `tint` y relleno `blue`. Puntos que más fallan: barra con el tramo de "No" en `error` y el de "Parcial" en `warning`, más el conteo en texto.
+- Paginación: con más de 12 estaciones el semáforo pasa a su propia página; "Registros recientes" va en página propia con el encabezado repetido en cada página, hasta 200 filas ("Mostrando N de M registros…" si se recorta). Pie fijo con el nombre del sistema y "Página X de Y".
+- Estado vacío en cada bloque: panel con "Aún no hay check-lists en este periodo".
+- Fuentes: TTF estáticos en `src/assets/fonts/` (Inter 400/600/700, Barlow Condensed 600/700) registrados con `Font.register`; sin guiones automáticos.
 
 ## Contraste (WCAG 2.1 AA)
 

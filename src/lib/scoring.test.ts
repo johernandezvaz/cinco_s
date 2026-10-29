@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { checklist, questions } from "@/config/checklist";
 import type { AnswerValue } from "@/config/scoring";
-import { answerLegend, average, MAX_SCORE, scoreAudit, sectionAverages, sectionMaxScore, sectionPercentage, statusFor, statusLabel, toPercentage, type Answers } from "./scoring";
+import { answerLegend, average, methodologyNote, MAX_SCORE, scoreAudit, sectionAverages, sectionMaxScore, sectionPercentage, statusFor, statusLabel, toPercentage, type Answers } from "./scoring";
 
 const all = (value: AnswerValue): Answers => Object.fromEntries(questions.map((q) => [q.id, value]));
 const [seiri] = checklist;
@@ -59,4 +59,5 @@ describe("semáforo", () => {
 
 describe("leyenda", () => {
   it("es el texto exacto del formulario", () => expect(answerLegend()).toBe("Sí = se cumple (2 pts) · Parcial = se cumple a medias (1 pt) · No = no se cumple (0 pts)"));
+  it("nota de metodología del PDF", () => expect(methodologyNote()).toBe("Sí = 2 pts · Parcial = 1 pt · No = 0 pts. Porcentaje = puntos / 30 × 100."));
 });

@@ -1,3 +1,5 @@
 import type { Config } from "tailwindcss";
-// Los valores viven solo en :root (src/app/globals.css); aquí se referencian.
-export default { content: ["./src/**/*.{ts,tsx}"], theme: { extend: { colors: { "blue": "var(--blue)", "blue-press": "var(--blue-press)", "navy": "var(--navy)", "gray": "var(--gray)", "surface": "var(--surface)", "tint": "var(--tint)", "ink": "var(--ink)", "muted": "var(--muted)", "white": "var(--white)", "success": "var(--success)", "success-bg": "var(--success-bg)", "success-ink": "var(--success-ink)", "warning": "var(--warning)", "warning-bg": "var(--warning-bg)", "warning-ink": "var(--warning-ink)", "error": "var(--error)", "error-bg": "var(--error-bg)", "error-ink": "var(--error-ink)" }, borderRadius: { control: "4px", card: "8px" }, fontFamily: { sans: ["var(--font-inter)", "system-ui", "sans-serif"], condensed: ["var(--font-condensed)", "sans-serif"] } } } } satisfies Config;
+import { tokens } from "./src/config/tokens";
+// Los valores viven en src/config/tokens.ts; Tailwind referencia sus variables CSS.
+const colors = Object.fromEntries(Object.keys(tokens).map((name) => [name, `var(--${name})`]));
+export default { content: ["./src/**/*.{ts,tsx}"], theme: { extend: { colors, borderRadius: { control: "4px", card: "8px" }, fontFamily: { sans: ["var(--font-inter)", "system-ui", "sans-serif"], condensed: ["var(--font-condensed)", "sans-serif"] } } } } satisfies Config;

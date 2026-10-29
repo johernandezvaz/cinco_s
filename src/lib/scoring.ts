@@ -31,7 +31,7 @@ export function sectionPercentage(section: ChecklistSection, answers: Answers) {
 
 /** Promedio por S entre varias evaluaciones (una por estación). */
 export function sectionAverages(evaluations: Answers[]) {
-  return checklist.map((section) => ({ ...section, percentage: average(evaluations.map((answers) => sectionPercentage(section, answers))) }));
+  return checklist.map((section) => ({ ...section, percentage: average(evaluations.map((answers) => sectionPercentage(section, answers))) ?? 0 }));
 }
 
 /** Promedio redondeado; `null` si no hay valores. */
@@ -45,3 +45,6 @@ export const statusLabel = (percentage: number) => STATUS_META[statusFor(percent
 
 /** Leyenda del formulario: el único lugar de la interfaz donde se muestran puntos. */
 export const answerLegend = () => ANSWER_OPTIONS.map(({ value, label, meaning }) => `${label} = ${meaning} (${ANSWER_POINTS[value]} ${ANSWER_POINTS[value] === 1 ? "pt" : "pts"})`).join(" · ");
+
+/** Nota de metodología del reporte PDF: único lugar del reporte con puntos. */
+export const methodologyNote = () => `${ANSWER_OPTIONS.map(({ value, label }) => `${label} = ${ANSWER_POINTS[value]} ${ANSWER_POINTS[value] === 1 ? "pt" : "pts"}`).join(" · ")}. Porcentaje = puntos / ${MAX_SCORE} × 100.`;
