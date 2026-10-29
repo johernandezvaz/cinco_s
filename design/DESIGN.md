@@ -1,5 +1,5 @@
 ---
-version: 2.0
+version: 2.1
 name: 5S Industrial Audit
 description: Sistema visual sobrio para auditorías operativas de manufactura. Azul/navy sobre superficie gris clara, formas rectas, tipografía condensada para títulos y cifras. Prioriza contraste, legibilidad en tablet y controles táctiles claros.
 ---
@@ -26,11 +26,13 @@ description: Sistema visual sobrio para auditorías operativas de manufactura. A
 
 | Estado | Fuerte | Fondo | Texto sobre fondo | Uso |
 |---|---|---|---|---|
-| Cumple (≥ 85%) | `success` `#1e7a4c` | `success-bg` `#dcefe4` | `success-ink` `#1d7448` | Badge, borde KPI |
-| Mejorar (70–84%) | `warning` `#a36200` | `warning-bg` `#fbecc8` | `warning-ink` `#945900` | Badge, borde KPI, "Parcial" seleccionado, barra de falla leve |
-| Crítico (< 70%) | `error` `#c0332b` | `error-bg` `#f8dcd9` | `error-ink` `#b32f28` | Badge, borde KPI, "No" seleccionado, barra de falla grave, validación |
+| Cumple (≥ 85%) ✓ | `success` `#1e7a4c` | `success-bg` `#dcefe4` | `success-ink` `#1d7448` | Badge, borde KPI |
+| Mejorar (70–84%) ◐ | `warning` `#a36200` | `warning-bg` `#fbecc8` | `warning-ink` `#945900` | Badge, borde KPI, "Parcial" seleccionado, barra de falla leve |
+| Crítico (< 70%) ✕ | `error` `#c0332b` | `error-bg` `#f8dcd9` | `error-ink` `#b32f28` | Badge, borde KPI, "No" seleccionado, barra de falla grave, validación |
 
 El color **fuerte** se usa para rellenos, bordes y como fondo de texto blanco. El texto de un badge sobre su `-bg` usa la variante **`-ink`**: los tonos fuertes quedan por debajo de 4.5:1 sobre su fondo tintado a 12px (ver Contraste).
+
+Los umbrales viven solo en `src/config/scoring.ts` (`STATUS_THRESHOLDS`). Un badge de estado siempre muestra ícono + texto, nunca solo color.
 
 Todas las superficies son de color plano: no hay degradados lineales ni radiales, ni sombras decorativas, en ninguna parte de la interfaz.
 
@@ -38,7 +40,7 @@ Todas las superficies son de color plano: no hay degradados lineales ni radiales
 
 Ambas familias se cargan con `next/font/google` en `src/app/layout.tsx` y se exponen como `--font-condensed` y `--font-inter`.
 
-- **Barlow Condensed** 600/700: `h1`–`h3`, nombre de marca, nombres de sección, números 1S–5S, puntajes, cifras KPI y valores de barras.
+- **Barlow Condensed** 600/700: `h1`–`h3`, nombre de marca, nombres de sección, números 1S–5S, contadores de sección, porcentajes, cifras KPI y valores de barras.
 - **Inter**: cuerpo, campos, botones, tablas y badges.
 - **Etiquetas** de campos, etiquetas de KPI, eyebrows y encabezados de tabla: 12px, MAYÚSCULAS, peso 700, `letter-spacing: 0.8px`, color `muted`.
 - Ningún título usa `letter-spacing` negativo.
@@ -73,11 +75,11 @@ Panel blanco con borde `gray` y radio 8px con Operador, Estación y Turno. Si fa
 
 ### Secciones 1S–5S
 
-`<details>` dentro de una tarjeta blanca. El número es un cuadrado de 36px, radio 4px, fondo `blue`, texto blanco en Barlow Condensed. Nombre de sección en navy condensado, nombre japonés en `muted`, puntaje a la derecha. Hover del encabezado: `tint`.
+`<details>` dentro de una tarjeta blanca. El número es un cuadrado de 36px, radio 4px, fondo `blue`, texto blanco en Barlow Condensed. Nombre de sección en navy condensado, nombre japonés en `muted` y, a la derecha, "X de 3 contestadas". El encabezado no muestra puntos ni porcentaje. Hover del encabezado: `tint`.
 
 ### Respuestas Sí / Parcial / No
 
-Control segmentado continuo de tres partes: bordes `gray` compartidos, radio 4px solo en los extremos, alto mínimo 48px. Sin seleccionar: fondo blanco, texto `ink`, hover `tint`.
+Control segmentado continuo de tres partes con el texto "Sí", "Parcial" y "No" únicamente (sin puntos): bordes `gray` compartidos, radio 4px solo en los extremos, alto mínimo 48px. Sin seleccionar: fondo blanco, texto `ink`, hover `tint`.
 
 | Opción | Seleccionada | Ícono |
 |---|---|---|
@@ -93,7 +95,7 @@ Fondo `error-bg` y franja izquierda de 4px en `error`.
 
 ### Barra de envío
 
-Franja fija inferior con fondo `surface` sólido y borde superior `gray`. Dentro, caja navy con texto blanco y radio 8px. El botón "Enviar check-list" es blanco con texto navy (hover `tint`); deshabilitado al 55% de opacidad.
+Franja fija inferior con fondo `surface` sólido y borde superior `gray`. Si el guardado falla, encima de la caja aparece el mensaje de error (`error-bg`, texto `error-ink`, franja izquierda de 4px en `error`, `role="alert"`) y el formulario conserva todo lo capturado. Dentro, caja navy con texto blanco y radio 8px. El botón "Enviar check-list" es blanco con texto navy (hover `tint`); deshabilitado al 55% de opacidad.
 
 ### Tablero
 
@@ -101,7 +103,19 @@ Franja fija inferior con fondo `surface` sólido y borde superior `gray`. Dentro
 - **Filtros de periodo**: botón blanco con borde `gray`; activo = fondo `tint` + borde `blue` + texto navy.
 - **Badges de estado**: radio 4px, fondo `-bg`, texto `-ink`.
 - **Barras**: pista `tint`, relleno `blue`. En "Puntos que más fallan" el relleno es `error` cuando un punto acumula al menos tantas respuestas "No" como "Parcial", y `warning` en caso contrario.
+- **Semáforo por estación**: cada fila es un enlace; hover y fila seleccionada en `tint`, la seleccionada con franja izquierda de 4px en `blue`. Abre el panel "Detalle de la evaluación" con cada pregunta y su respuesta como badge (Sí = success ✓, Parcial = warning ◐, No = error ✕).
 - **Tablas**: separadores `gray`, encabezados en estilo de etiqueta.
+
+### Confirmación
+
+Tarjeta blanca centrada: porcentaje grande en Barlow Condensed, badge de semáforo con ícono + texto y botón primario "Llenar otra estación".
+
+## Puntos, porcentajes y dónde se muestran
+
+- Sí = 2 pts, Parcial = 1 pt, No = 0 pts (`ANSWER_POINTS` en `src/config/scoring.ts`). Máximo 30 por evaluación (15 × 2) y 6 por S (3 × 2).
+- Porcentaje = puntos / 30 × 100 redondeado; porcentaje por S = puntos de la S / 6 × 100. El cálculo vive solo en `src/lib/scoring.ts`.
+- **Los puntos solo aparecen en la leyenda del formulario:** "Sí = se cumple (2 pts) · Parcial = se cumple a medias (1 pt) · No = no se cumple (0 pts)".
+- Botones, encabezados de sección, confirmación, tablero, detalle, tablas y CSV muestran porcentaje y semáforo; nunca "pts" ni "X/30".
 
 ## Contraste (WCAG 2.1 AA)
 
@@ -126,4 +140,4 @@ Franja fija inferior con fondo `surface` sólido y borde superior `gray`. Dentro
 ## Respuesta
 
 - Objetivos táctiles ≥ 44px; respuestas ≥ 48px.
-- A 768px o menos: margen lateral de 16px, metadatos y paneles en una columna, KPI en dos columnas, botón de envío a todo el ancho y la pista de puntos de cada respuesta pasa a segunda línea.
+- A 768px o menos: margen lateral de 16px, metadatos y paneles en una columna, KPI en dos columnas, botón de envío a todo el ancho y el encabezado del detalle se apila.

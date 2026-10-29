@@ -6,28 +6,26 @@
     "dev": "next dev --webpack --port 4571",
     "build": "next build",
     "start": "next start --port 4571",
-    "serve": "next build && next start --port 4571",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "db:migrate": "node --env-file=.env.local --import tsx src/db/migrate.ts",
-    "db:seed": "node --env-file=.env.local --import tsx src/db/seed.ts"
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx src/db/migrate.ts"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.11",
     "drizzle-orm": "^0.44.7",
     "next": "^16.0.1",
-    "pg": "^8.13.1",
+    "postgres": "^3.4.7",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "^0.5.13",
     "@eslint/eslintrc": "^3.3.1",
+    "@next/env": "^16.4.3",
     "@tailwindcss/postcss": "^4.1.16",
     "@types/node": "^24.10.0",
-    "@types/pg": "^8.11.10",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "autoprefixer": "^10.4.21",

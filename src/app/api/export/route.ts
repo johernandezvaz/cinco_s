@@ -1,4 +1,21 @@
-import { gte } from "drizzle-orm";
-import { db } from "@/db"; import { audits } from "@/db/schema";
-function start(period: string) { if(period === "all") return new Date(0); if(period === "today"){const d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate())} return new Date(Date.now() - (period === "30" ? 30 : 7) * 864e5); }
-export async function GET(request: Request) { const period = new URL(request.url).searchParams.get("period") ?? "7"; const rows = await db.select().from(audits).where(gte(audits.createdAt, start(period))); const quote=(v:string|number|null) => `"${String(v??"").replaceAll('"','""')}"`; const csv = ["Fecha,Estación,Operador,Turno,Puntaje,Porcentaje,Comentarios", ...rows.map((r)=>[r.createdAt.toISOString(),r.station,r.operator,r.shift,r.score,r.percentage,r.comments].map(quote).join(","))].join("\n"); return new Response("\uFEFF"+csv,{headers:{"Content-Type":"text/csv; charset=utf-8","Content-Disposition":"attachment; filename=auditorias-5s.csv"}}); }
+import { db } from "@/db";
+import { getExportRows } from "@/db/audits";
+import { questions } from "@/config/checklist";
+import { ANSWER_LABELS, TIME_ZONE } from "@/config/scoring";
+import { parsePeriod, periodStart } from "@/lib/period";
+import { statusLabel } from "@/lib/scoring";
+
+export const dynamic = "force-dynamic";
+
+const dateTime = new Intl.DateTimeFormat("sv-SE", { timeZone: TIME_ZONE, dateStyle: "short", timeStyle: "short" });
+// Comillas dobles y prefijo para que Excel no interprete el texto capturado como fórmula.
+const cell = (value: string | number | null) => { const text = String(value ?? ""); return `"${(/^[=+\-@\t\r]/.test(text) ? `'${text}` : text).replaceAll('"', '""')}"`; };
+
+export async function GET(request: Request) {
+  const period = parsePeriod(new URL(request.url).searchParams.get("period"));
+  const rows = await getExportRows(db, periodStart(period, new Date(), TIME_ZONE));
+  const header = ["Fecha", "Estación", "Operador", "Turno", "Porcentaje", "Semáforo", "Comentarios", ...questions.map((q) => `${q.id.toUpperCase()} ${q.text}`)];
+  const lines = rows.map((row) => [dateTime.format(row.createdAt), row.station, row.operator, row.shift, `${row.percentage}%`, statusLabel(row.percentage), row.comments, ...questions.map((q) => { const answer = row.answers[q.id]; return answer ? ANSWER_LABELS[answer] : ""; })]);
+  const csv = [header, ...lines].map((line) => line.map(cell).join(",")).join("\r\n");
+  return new Response(`﻿${csv}`, { headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename=auditorias-5s-${period}.csv` } });
+}

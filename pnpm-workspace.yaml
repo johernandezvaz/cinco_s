@@ -1,4 +1,4 @@
+autoInstallPeers: false
 allowBuilds:
-  better-sqlite3: false
   esbuild: false
   unrs-resolver: false
