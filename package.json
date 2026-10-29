@@ -6,6 +6,7 @@
     "dev": "next dev --webpack --port 4571",
     "build": "next build",
     "start": "next start --port 4571",
+    "serve": "next build && next start --port 4571",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
